@@ -99,7 +99,7 @@ const Step1 = ({ handleNext, formik }) => {
           </Grid>
         </Grid>
         <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button onClick={() => history.push("/home")} sx={{ mt: 3, ml: 1 }}>
+          <Button onClick={() => history.goBack()} sx={{ mt: 3, ml: 1 }}>
             Volver
           </Button>
           <Button

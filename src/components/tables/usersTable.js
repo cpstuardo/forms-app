@@ -19,8 +19,9 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import FeedIcon from "@mui/icons-material/Feed";
-import { url_backend } from "../global";
+import { url_backend } from "../../utils/global";
 import { useHistory } from "react-router-dom";
+import FilterUsers from "../filters/filterUsers";
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -38,8 +39,6 @@ function getComparator(order, orderBy) {
     : (a, b) => -descendingComparator(a, b, orderBy);
 }
 
-// This method is created for cross-browser compatibility, if you don't
-// need to support IE11, you can use Array.prototype.sort() directly
 function stableSort(array, comparator) {
   const stabilizedThis = array.map((el, index) => [el, index]);
   stabilizedThis.sort((a, b) => {
@@ -65,6 +64,10 @@ const headCells = [
     id: "email",
     label: "Email",
   },
+  {
+    id: "role",
+    label: "Rol",
+  },
 ];
 
 function EnhancedTableHead(props) {
@@ -79,7 +82,7 @@ function EnhancedTableHead(props) {
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
-            align={"center"}
+            align={"left"}
             padding={"normal"}
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{ width: headCell.id === "id" ? "5%" : "25%" }}
@@ -105,7 +108,6 @@ function EnhancedTableHead(props) {
           sortDirection={false}
           sx={{ width: "45%" }}
         >
-          {" "}
           Acciones
         </TableCell>
       </TableRow>
@@ -120,7 +122,20 @@ EnhancedTableHead.propTypes = {
   rowCount: PropTypes.number.isRequired,
 };
 
-const EnhancedTableToolbar = () => {
+const EnhancedTableToolbar = ({ namesOptions, rolesOptions, setFilters }) => {
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const id = open ? "simple-popover" : undefined;
+
   return (
     <Toolbar
       sx={{
@@ -138,10 +153,19 @@ const EnhancedTableToolbar = () => {
       </Typography>
 
       <Tooltip title="Filtrar">
-        <IconButton>
+        <IconButton aria-describedby={id} onClick={handleClick}>
           <FilterListIcon />
         </IconButton>
       </Tooltip>
+      <FilterUsers
+        open={open}
+        handleClose={handleClose}
+        id={id}
+        anchorEl={anchorEl}
+        namesOptions={namesOptions}
+        rolesOptions={rolesOptions}
+        setFilters={setFilters}
+      />
     </Toolbar>
   );
 };
@@ -150,12 +174,15 @@ export default function EnhancedTable({
   rows,
   setOpenSnackDelete,
   setOpenSnackFail,
+  setFilters,
 }) {
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("id");
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const history = useHistory();
+  const [names, setNames] = React.useState({});
+  const [roles, setRoles] = React.useState({});
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -185,6 +212,10 @@ export default function EnhancedTable({
     history.push(`/${id}/form`);
   };
 
+  const handleEdit = (id) => {
+    history.push(`/${id}/editAdmin`);
+  };
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -194,13 +225,36 @@ export default function EnhancedTable({
     setPage(0);
   };
 
+  React.useEffect(() => {
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        Authorization: "Bearer " + sessionStorage.getItem("accessToken"),
+      },
+    };
+    fetch(url_backend + "auth/options", requestOptions)
+      .then((response) => response.json())
+      .then((data) => {
+        data.names.map((dict_name) => {
+          names[dict_name["name"]] = false;
+        });
+        data.roles.map((dict_role) => {
+          roles[dict_role["role"]] = false;
+        });
+      });
+  }, []);
+
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center" }}>
+    <Box sx={{ display: "flex", justifyContent: "center", marginBottom: -10 }}>
       <Paper sx={{ width: "70%", mb: 10 }}>
-        <EnhancedTableToolbar />
+        <EnhancedTableToolbar
+          rolesOptions={roles}
+          namesOptions={names}
+          setFilters={setFilters}
+        />
         <TableContainer>
           <Table
             sx={{ minWidth: 750 }}
@@ -221,19 +275,20 @@ export default function EnhancedTable({
 
                   return (
                     <TableRow role="checkbox" tabIndex={-1} key={row.id}>
-                      <TableCell id={labelId} align="center">
+                      <TableCell id={labelId} align="left">
                         {row.id}
                       </TableCell>
-                      <TableCell align="center">{row.name}</TableCell>
-                      <TableCell align="center">{row.email}</TableCell>
+                      <TableCell align="left">{row.name}</TableCell>
+                      <TableCell align="left">{row.email}</TableCell>
+                      <TableCell align="left">{row.role}</TableCell>
                       <TableCell align="center">
-                        <Tooltip title="Ver respuestas">
+                        <Tooltip title="Ver encuestas">
                           <IconButton onClick={() => handleShowAnswers(row.id)}>
                             <FeedIcon />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Editar usuario">
-                          <IconButton>
+                          <IconButton onClick={() => handleEdit(row.id)}>
                             <EditIcon />
                           </IconButton>
                         </Tooltip>

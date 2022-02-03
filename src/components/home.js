@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { url_backend } from "../global";
+import { url_backend } from "../utils/global";
 import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 import { useHistory } from "react-router-dom";
 
 const Home = () => {
   const history = useHistory();
   const [userName, setUserName] = useState("");
+  const [userId, setUserId] = useState("");
 
   useEffect(() => {
     const requestOptions = {
@@ -21,9 +23,10 @@ const Home = () => {
           history.push("/");
         } else {
           setUserName(data.name);
+          setUserId(data.id);
         }
       });
-  }, []);
+  }, [history]);
 
   const closeSession = () => {
     sessionStorage.removeItem("logged");
@@ -33,15 +36,53 @@ const Home = () => {
 
   return (
     <div>
-      <h1>Hola {userName} </h1>
-      <Button onClick={() => history.push("/form")}>
-        Responder formulario
-      </Button>
+      <br />
+      <Typography
+        sx={{ flex: "1 1 100%" }}
+        variant="h6"
+        id="tableTitle"
+        component="div"
+      >
+        Bienvenido {userName}
+      </Typography>
       <Button onClick={closeSession}>Cerrar sesión</Button>
+      <br />
+      <Button onClick={() => history.push("/updatePassword")}>
+        Cambiar contraseña
+      </Button>
+      <br />
+      {sessionStorage.getItem("role") === "user" ? (
+        <div>
+          <Button onClick={() => history.push("/form")}>
+            Realizar encuesta
+          </Button>
+          <br />
+          <Button onClick={() => history.push(`/${userId}/form`)}>
+            Revisar encuestas realizadas
+          </Button>
+        </div>
+      ) : (
+        <div />
+      )}
       {sessionStorage.getItem("role") === "admin" ? (
-        <Button onClick={() => history.push("/users")}>
-          Manejo de usuarios
-        </Button>
+        <div>
+          <Button onClick={() => history.push("/users")}>
+            Manejo de usuarios
+          </Button>
+          <br />
+          <Button onClick={() => history.push("/FormProgress")}>
+            Revisar encuesta
+          </Button>
+        </div>
+      ) : (
+        <div />
+      )}
+      {sessionStorage.getItem("role") === "premium" ? (
+        <div>
+          <Button onClick={() => history.push("/FormProgress")}>
+            Revisar encuesta
+          </Button>
+        </div>
       ) : (
         <div />
       )}

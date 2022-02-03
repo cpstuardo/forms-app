@@ -7,3 +7,14 @@
   font-size: small;
   height: 0.3cm;
 }
+
+.tooltip {
+  font-size: small;
+  color: gray;
+}
+
+.filter-users {
+  height: auto;
+  width: 60vh;
+  margin: 0.5cm;
+}

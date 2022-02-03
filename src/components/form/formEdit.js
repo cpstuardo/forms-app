@@ -3,13 +3,45 @@ import { checkRut } from "react-rut-formatter";
 import { useFormik } from "formik";
 import { url_backend } from "../../utils/global";
 import BaseForm from "./baseForm";
-import { useHistory } from "react-router-dom";
+import { useHistory, useParams } from "react-router-dom";
 
 const steps = ["Paso 1", "Paso 2", "Paso 3"];
 
-const Form = () => {
+const FormEdit = () => {
   const history = useHistory();
   const [activeStep, setActiveStep] = React.useState(0);
+  const [name, setName] = React.useState("");
+  const [rut, setRut] = React.useState("");
+  const [age, setAge] = React.useState("");
+  const [gender, setGender] = React.useState("");
+  const [address, setAddress] = React.useState("");
+  const [region, setRegion] = React.useState("");
+  const [comuna, setComuna] = React.useState("");
+  const [score, setScore] = React.useState("");
+  const [comments, setComments] = React.useState("");
+  let { formId } = useParams();
+
+  React.useEffect(() => {
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        Authorization: "Bearer " + sessionStorage.getItem("accessToken"),
+      },
+    };
+    fetch(url_backend + `form/form/${formId}`, requestOptions)
+      .then((response) => response.json())
+      .then((data) => {
+        setName(data.name);
+        setRut(data.rut);
+        setAge(data.age);
+        setGender(data.gender);
+        setAddress(data.address);
+        setRegion(data.region);
+        setComuna(data.comuna);
+        setScore(data.score);
+        setComments(data.comments);
+      });
+  }, [formId]);
 
   const handleNext = () => {
     setActiveStep(activeStep + 1);
@@ -22,16 +54,17 @@ const Form = () => {
   const isLastStep = () => activeStep === steps.length - 1;
 
   const formik = useFormik({
+    enableReinitialize: true,
     initialValues: {
-      name: "",
-      rut: "",
-      age: "",
-      gender: "",
-      address: "",
-      comuna: "",
-      region: "",
-      score: "",
-      comments: "",
+      name,
+      rut,
+      age,
+      gender,
+      address,
+      region,
+      comuna,
+      score,
+      comments,
     },
     validate: (values) => {
       const errors = {};
@@ -75,20 +108,20 @@ const Form = () => {
         return;
       } else {
         const requestOptions = {
-          method: "POST",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: "Bearer " + sessionStorage.getItem("accessToken"),
           },
           body: JSON.stringify(values, null, 2),
         };
-        fetch(url_backend + "form/new", requestOptions)
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.message === "success") {
+        fetch(url_backend + `form/form/${formId}`, requestOptions).then(
+          (response) => {
+            if (response.status === 200) {
               handleNext();
             }
-          });
+          }
+        );
       }
     },
   });
@@ -105,4 +138,4 @@ const Form = () => {
   );
 };
 
-export default Form;
+export default FormEdit;

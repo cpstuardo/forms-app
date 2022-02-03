@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
-import { url_backend } from "../global";
+import { url_backend } from "../../utils/global";
 import { useHistory, useParams } from "react-router-dom";
-import SnackbarAlert from "./snackbarAlert";
-import FormTable from "./formTable";
+import FormTable from "../tables/formTable";
+import SnackbarAlert from "../snackbarAlert";
 
 const UserAnswers = () => {
   const history = useHistory();
@@ -19,17 +19,24 @@ const UserAnswers = () => {
         Authorization: "Bearer " + sessionStorage.getItem("accessToken"),
       },
     };
-    fetch(url_backend + `form/${userId}`, requestOptions)
+    fetch(url_backend + `form/user/${userId}`, requestOptions)
       .then((response) => response.json())
-      .then((data) => setAnswers(data));
-  }, []);
+      .then((data) =>
+        setAnswers(
+          data.map((d) => {
+            d.user = d.user.name;
+            return d;
+          })
+        )
+      );
+  }, [userId, openSnackDelete]);
 
   return (
     <div>
       <SnackbarAlert
         openSnack={openSnackDelete}
         setOpenSnack={setOpenSnackDelete}
-        msg={"Respuesta eliminada exitosamente"}
+        msg={"Encuesta eliminada exitosamente"}
         type="success"
       />
       <SnackbarAlert
@@ -47,7 +54,7 @@ const UserAnswers = () => {
       <br />
       <Button
         variant="contained"
-        onClick={() => history.push("/users")}
+        onClick={() => history.goBack()}
         sx={{ mt: 3, ml: 1 }}
       >
         Volver

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
-import { url_backend } from "../global";
+import { url_backend } from "../../utils/global";
 import { useHistory } from "react-router-dom";
-import UsersTable from "./usersTable";
-import SnackbarAlert from "./snackbarAlert";
+import UsersTable from "../tables/usersTable";
+import SnackbarAlert from "../snackbarAlert";
 
 const Users = () => {
   const history = useHistory();
+  const [filters, setFilters] = useState("/");
   const [users, setUsers] = useState([]);
   const [openSnackDelete, setOpenSnackDelete] = useState(false);
   const [openSnackFail, setOpenSnackFail] = useState(false);
@@ -18,10 +19,10 @@ const Users = () => {
         Authorization: "Bearer " + sessionStorage.getItem("accessToken"),
       },
     };
-    fetch(url_backend + "auth/users", requestOptions)
+    fetch(url_backend + "auth/users" + filters, requestOptions)
       .then((response) => response.json())
       .then((data) => setUsers(data));
-  }, [openSnackDelete]);
+  }, [openSnackDelete, filters]);
 
   return (
     <div>
@@ -42,6 +43,7 @@ const Users = () => {
         rows={users}
         setOpenSnackDelete={setOpenSnackDelete}
         setOpenSnackFail={setOpenSnackFail}
+        setFilters={setFilters}
       />
       <Button
         onClick={() => history.push("/registerAdmin")}
@@ -55,7 +57,7 @@ const Users = () => {
         onClick={() => history.push("/home")}
         sx={{ mt: 3, ml: 1 }}
       >
-        Volver al home
+        Volver
       </Button>
     </div>
   );

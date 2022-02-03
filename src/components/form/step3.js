@@ -4,7 +4,6 @@ import Grid from "@mui/material/Grid";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import { Formik } from "formik";
 import { useStyles } from "../styles";
 
 const Step3 = ({ handleNext, handleBack, formik }) => {
@@ -20,16 +19,33 @@ const Step3 = ({ handleNext, handleBack, formik }) => {
             <TextField
               required
               fullWidth
-              multiline
-              maxRows={4}
-              id="opinion"
-              label="Opinión"
+              id="score"
+              label="Calificación"
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              value={formik.values.opinion}
+              value={formik.values.score}
               helperText={
-                formik.errors.opinion && formik.touched.opinion
-                  ? formik.errors.opinion
+                formik.errors.score && formik.touched.score
+                  ? formik.errors.score
+                  : ""
+              }
+              classes={{ root: classes.textField }}
+              variant="standard"
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              multiline
+              maxRows={4}
+              id="comments"
+              label="Comentarios"
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.comments}
+              helperText={
+                formik.errors.comments && formik.touched.comments
+                  ? formik.errors.comments
                   : ""
               }
               classes={{ root: classes.textField }}

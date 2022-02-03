@@ -1,25 +1,21 @@
 import * as React from "react";
-import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import Link from "@mui/material/Link";
-import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import SnackbarAlert from "./snackbarAlert";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import { url_backend } from "../utils/global";
 import { useHistory } from "react-router-dom";
 import { Formik } from "formik";
 import { useStyles } from "./styles";
-import Copyright from "./copyright";
 import "../App.css";
 
-const Login = () => {
+const UpdatePassword = () => {
   const classes = useStyles();
   let history = useHistory();
   const [openSnack, setOpenSnack] = React.useState(false);
+  const [openSnack2, setOpenSnack2] = React.useState(false);
 
   return (
     <Container component="main" maxWidth="xs">
@@ -37,44 +33,44 @@ const Login = () => {
           msg={"Credenciales inválidas"}
           type="error"
         />
-        <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
-          <LockOutlinedIcon />
-        </Avatar>
-        <Typography component="h1" variant="h5">
-          Iniciar Sesión
+        <SnackbarAlert
+          openSnack={openSnack2}
+          setOpenSnack={setOpenSnack2}
+          msg={"Contraseña actualizadas"}
+          type="success"
+        />
+        <Typography component="h1" variant="h6">
+          Cambiar contraseña
         </Typography>
         <Formik
-          initialValues={{ email: "", password: "" }}
+          initialValues={{ prevPassword: "", newPassword: "" }}
           validate={(values) => {
             const errors = {};
-            if (!values.email) {
-              errors.email = "Ingresa tu email";
-            } else if (
-              !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)
-            ) {
-              errors.email = "Ingresa un email válido";
+            if (!values.prevPassword) {
+              errors.prevPassword = "Ingresa tu contraseña actual";
             }
-            if (!values.password) {
-              errors.password = "Ingresa tu contraseña";
+            if (!values.newPassword) {
+              errors.newPassword = "Ingresa tu nueva contraseña";
             }
             return errors;
           }}
           onSubmit={(values, { setSubmitting }) => {
             const requestOptions = {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization:
+                  "Bearer " + sessionStorage.getItem("accessToken"),
+              },
               body: JSON.stringify(values, null, 2),
             };
-            fetch(url_backend + "auth/login", requestOptions)
+            fetch(url_backend + "auth/cred", requestOptions)
               .then((response) => response.json())
               .then((data) => {
                 if (data.statusCode === 400) {
                   setOpenSnack(true);
                 } else {
-                  sessionStorage.setItem("accessToken", data.access);
-                  sessionStorage.setItem("logged", true);
-                  sessionStorage.setItem("role", data.role);
-                  history.push("/home");
+                  setOpenSnack2(true);
                 }
               });
             setSubmitting(false);
@@ -94,26 +90,33 @@ const Login = () => {
                 margin="normal"
                 required
                 fullWidth
-                id="email"
-                label="Email"
+                id="prevPassword"
+                label="Contraseña actual"
+                type="password"
                 onChange={handleChange}
                 onBlur={handleBlur}
-                value={values.email}
-                helperText={errors.email && touched.email ? errors.email : ""}
+                value={values.prevPassword}
+                helperText={
+                  errors.prevPassword && touched.prevPassword
+                    ? errors.prevPassword
+                    : ""
+                }
                 classes={{ root: classes.textField }}
               />
               <TextField
                 margin="normal"
                 required
                 fullWidth
-                id="password"
-                label="Contraseña"
+                id="newPassword"
+                label="Contraseña nueva"
                 type="password"
                 onChange={handleChange}
                 onBlur={handleBlur}
-                value={values.password}
+                value={values.newPassword}
                 helperText={
-                  errors.password && touched.password ? errors.password : ""
+                  errors.newPassword && touched.newPassword
+                    ? errors.newPassword
+                    : ""
                 }
                 classes={{ root: classes.textField }}
               />
@@ -124,27 +127,20 @@ const Login = () => {
                 disabled={isSubmitting}
                 sx={{ mt: 3, mb: 2 }}
               >
-                Iniciar Sesión
+                Cambiar contraseña
+              </Button>
+              <Button
+                onClick={() => history.push("/home")}
+                sx={{ mt: 3, ml: 1 }}
+              >
+                Volver
               </Button>
             </form>
           )}
         </Formik>
-        <Grid container>
-          <Grid item xs>
-            <Link href="/forgotPassword" variant="body2">
-              Olvidaste tu contraseña?
-            </Link>
-          </Grid>
-          <Grid item xs>
-            <Link href="/register" variant="body2">
-              {"Registrarme"}
-            </Link>
-          </Grid>
-        </Grid>
       </Box>
-      <Copyright sx={{ mt: 8, mb: 4 }} />
     </Container>
   );
 };
 
-export default Login;
+export default UpdatePassword;

@@ -13,9 +13,13 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import IconButton from "@mui/material/IconButton";
+import EditIcon from "@mui/icons-material/Edit";
 import Tooltip from "@mui/material/Tooltip";
 import { visuallyHidden } from "@mui/utils";
 import FilterListIcon from "@mui/icons-material/FilterList";
+import { useHistory } from "react-router-dom";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { url_backend } from "../../utils/global";
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -75,16 +79,20 @@ const headCells = [
     label: "Comuna",
   },
   {
-    id: "city",
-    label: "Ciudad",
-  },
-  {
     id: "region",
     label: "Región",
   },
   {
-    id: "opinion",
-    label: "Opinión",
+    id: "score",
+    label: "Calificación",
+  },
+  {
+    id: "comments",
+    label: "Comentarios",
+  },
+  {
+    id: "userId",
+    label: "Encuestador",
   },
 ];
 
@@ -100,17 +108,8 @@ function EnhancedTableHead(props) {
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
-            align={"center"}
-            padding={"normal"}
+            align={"left"}
             sortDirection={orderBy === headCell.id ? order : false}
-            sx={{
-              width:
-                headCell.id === "id"
-                  ? "5%"
-                  : headCell.id === "name" || headCell.id === "address"
-                  ? "20%"
-                  : "7%",
-            }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
@@ -126,6 +125,15 @@ function EnhancedTableHead(props) {
             </TableSortLabel>
           </TableCell>
         ))}
+        <TableCell
+          key={"actions"}
+          align={"center"}
+          padding={"normal"}
+          sortDirection={false}
+          sx={{ width: "45%" }}
+        >
+          Acciones
+        </TableCell>
       </TableRow>
     </TableHead>
   );
@@ -166,13 +174,14 @@ const EnhancedTableToolbar = () => {
 
 export default function EnhancedTable({
   rows,
-  setOpenSnackDelete,
   setOpenSnackFail,
+  setOpenSnackDelete,
 }) {
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("id");
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const history = useHistory();
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -189,18 +198,41 @@ export default function EnhancedTable({
     setPage(0);
   };
 
+  const handleEdit = (id) => {
+    history.push(`/${id}/formEdit`);
+  };
+
+  const handleDelete = (id) => {
+    const requestOptions = {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + sessionStorage.getItem("accessToken"),
+      },
+      body: JSON.stringify({ id }),
+    };
+    fetch(url_backend + "form/form", requestOptions).then((response) => {
+      if (response.status === 200) {
+        setOpenSnackDelete(true);
+      } else {
+        setOpenSnackFail(true);
+      }
+    });
+  };
+
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center" }}>
-      <Paper sx={{ width: "90%", mb: 10 }}>
+    <Box sx={{ display: "flex", justifyContent: "center", marginBottom: -10 }}>
+      <Paper sx={{ width: "95%", mb: 10 }}>
         <EnhancedTableToolbar />
-        <TableContainer>
+        <TableContainer style={{ maxHeight: 800 }}>
           <Table
             sx={{ minWidth: 750 }}
             aria-labelledby="tableTitle"
             size={"small"}
+            stickyHeader
           >
             <EnhancedTableHead
               order={order}
@@ -221,13 +253,29 @@ export default function EnhancedTable({
                       </TableCell>
                       <TableCell align="left">{row.name}</TableCell>
                       <TableCell align="left">{row.rut}</TableCell>
-                      <TableCell align="left">{row.age}</TableCell>
+                      <TableCell align="center">{row.age}</TableCell>
                       <TableCell align="left">{row.gender}</TableCell>
                       <TableCell align="left">{row.address}</TableCell>
-                      <TableCell align="left">{row.city}</TableCell>
                       <TableCell align="left">{row.comuna}</TableCell>
                       <TableCell align="left">{row.region}</TableCell>
-                      <TableCell align="left">{row.opinion}</TableCell>
+                      <TableCell align="center">{row.score}</TableCell>
+                      <TableCell align="left">{row.comments}</TableCell>
+                      <TableCell align="left">{row.user}</TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="Editar encuesta">
+                          <IconButton onClick={() => handleEdit(row.id)}>
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Eliminar encuesta">
+                          <IconButton
+                            onClick={() => handleDelete(row.id)}
+                            size="small"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
                     </TableRow>
                   );
                 })}

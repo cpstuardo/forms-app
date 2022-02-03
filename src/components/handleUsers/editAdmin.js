@@ -1,19 +1,15 @@
 import * as React from "react";
-import Avatar from "@mui/material/Avatar";
-import Copyright from "./copyright";
 import Button from "@mui/material/Button";
 import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
-import Link from "@mui/material/Link";
-import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
-import SnackbarAlert from "./snackbarAlert";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import SnackbarAlert from "../snackbarAlert";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
-import { useHistory } from "react-router-dom";
-import { url_backend } from "../utils/global";
-import { useStyles } from "./styles";
+import MenuItem from "@mui/material/MenuItem";
+import { useHistory, useParams } from "react-router-dom";
+import { url_backend } from "../../utils/global";
+import { useStyles } from "../styles";
 import { Formik } from "formik";
 
 const Register = () => {
@@ -21,10 +17,26 @@ const Register = () => {
   const history = useHistory();
   const [openSnack, setOpenSnack] = React.useState(false);
   const [openSnack2, setOpenSnack2] = React.useState(false);
+  const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [role, setRole] = React.useState("");
+  let { userId } = useParams();
 
-  const sleep = (milliseconds) => {
-    return new Promise((resolve) => setTimeout(resolve, milliseconds));
-  };
+  React.useEffect(() => {
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        Authorization: "Bearer " + sessionStorage.getItem("accessToken"),
+      },
+    };
+    fetch(url_backend + `auth/user/${userId}`, requestOptions)
+      .then((response) => response.json())
+      .then((data) => {
+        setName(data.name);
+        setEmail(data.email);
+        setRole(data.role);
+      });
+  }, [userId]);
 
   return (
     <Container component="main" maxWidth="xs">
@@ -40,54 +52,53 @@ const Register = () => {
         <SnackbarAlert
           openSnack={openSnack}
           setOpenSnack={setOpenSnack}
-          msg={"Ya existe una cuenta con el email ingresado"}
+          msg={"Error al editar usuario"}
           type="error"
         />
         <SnackbarAlert
           openSnack={openSnack2}
           setOpenSnack={setOpenSnack2}
-          msg={"Cuenta creada exitosamente"}
+          msg={"Usuario editado exitosamente"}
           type="success"
         />
-        <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
-          <LockOutlinedIcon />
-        </Avatar>
         <Typography component="h1" variant="h5">
-          Registrarme
+          Editar usuario {name}
         </Typography>
         <Formik
-          initialValues={{ name: "", email: "", password: "" }}
+          initialValues={{ name: name, email: email, role: role }}
+          enableReinitialize
           validate={(values) => {
             const errors = {};
             if (!values.email) {
-              errors.email = "Ingresa tu email";
+              errors.email = "Ingresa un email";
             } else if (
               !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)
             ) {
               errors.email = "Ingresa un email válido";
             }
-            if (!values.password) {
-              errors.password = "Ingresa tu contraseña";
-            }
             if (!values.name) {
-              errors.name = "Ingresa tu nombre";
+              errors.name = "Ingresa un nombre";
+            }
+            if (!values.role) {
+              errors.role = "Ingresa un rol";
             }
             return errors;
           }}
           onSubmit={(values, { setSubmitting }) => {
             const requestOptions = {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization:
+                  "Bearer " + sessionStorage.getItem("accessToken"),
+              },
               body: JSON.stringify(values, null, 3),
             };
-            fetch(url_backend + "auth/register", requestOptions).then(
+            fetch(url_backend + `auth/user/${userId}`, requestOptions).then(
               (response) => {
-                if (response.status === 201) {
+                if (response.status === 200) {
                   setOpenSnack2(true);
-                  sleep(3000).then(() => {
-                    history.push("/"); // login
-                  });
-                } else if (response.status === 409) {
+                } else {
                   setOpenSnack(true);
                 }
               }
@@ -133,17 +144,19 @@ const Register = () => {
                 margin="dense"
                 required
                 fullWidth
-                id="password"
-                label="Contraseña"
-                type="password"
-                onChange={handleChange}
-                onBlur={handleBlur}
-                value={values.password}
-                helperText={
-                  errors.password && touched.password ? errors.password : ""
-                }
+                select
+                id="role"
+                label="Rol"
+                onChange={handleChange("role")}
+                onBlur={handleBlur("role")}
+                value={values.role}
+                helperText={errors.role && touched.role ? errors.role : ""}
                 classes={{ root: classes.textField }}
-              />
+              >
+                <MenuItem value="admin">Administrador</MenuItem>
+                <MenuItem value="premium">Premium</MenuItem>
+                <MenuItem value="user">Usuario</MenuItem>
+              </TextField>
               <Button
                 type="submit"
                 fullWidth
@@ -151,20 +164,15 @@ const Register = () => {
                 disabled={isSubmitting}
                 sx={{ mt: 3, mb: 2 }}
               >
-                Registrar
+                Editar
               </Button>
             </form>
           )}
         </Formik>
-        <Grid container justifyContent="flex-end">
-          <Grid item xs>
-            <Link href="/" variant="body2">
-              Ya tienes una cuenta? Inicia sesión.
-            </Link>
-          </Grid>
-        </Grid>
+        <Button onClick={() => history.goBack()} sx={{ mt: 3, ml: 1 }}>
+          Volver
+        </Button>
       </Box>
-      <Copyright sx={{ mt: 5 }} />
     </Container>
   );
 };

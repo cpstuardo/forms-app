@@ -5,10 +5,12 @@ import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import { useStyles } from "../styles";
+import MenuItem from "@mui/material/MenuItem";
+import { region, regionComuna } from "../../utils/geoData";
 
 const Step2 = ({ handleNext, handleBack, formik }) => {
   const classes = useStyles();
-  const [address, setAddress] = React.useState("");
+
   return (
     <React.Fragment>
       <Typography variant="h6" gutterBottom>
@@ -38,46 +40,11 @@ const Step2 = ({ handleNext, handleBack, formik }) => {
             <TextField
               required
               fullWidth
-              id="comuna"
-              label="Comuna"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              value={formik.values.comuna}
-              helperText={
-                formik.errors.comuna && formik.touched.comuna
-                  ? formik.errors.comuna
-                  : ""
-              }
-              classes={{ root: classes.textField }}
-              variant="standard"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              required
-              fullWidth
-              id="city"
-              label="Ciudad"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              value={formik.values.city}
-              helperText={
-                formik.errors.city && formik.touched.city
-                  ? formik.errors.city
-                  : ""
-              }
-              classes={{ root: classes.textField }}
-              variant="standard"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              required
-              fullWidth
+              select
               id="region"
               label="Región"
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
+              onChange={formik.handleChange("region")}
+              onBlur={formik.handleBlur("region")}
               value={formik.values.region}
               helperText={
                 formik.errors.region && formik.touched.region
@@ -86,7 +53,39 @@ const Step2 = ({ handleNext, handleBack, formik }) => {
               }
               classes={{ root: classes.textField }}
               variant="standard"
-            />
+            >
+              {region.map((reg) => (
+                <MenuItem key={reg} value={reg}>
+                  {reg}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              required
+              fullWidth
+              select
+              id="comuna"
+              label="Comuna"
+              onChange={formik.handleChange("comuna")}
+              onBlur={formik.handleBlur("comuna")}
+              value={formik.values.comuna}
+              helperText={
+                formik.errors.comuna && formik.touched.comuna
+                  ? formik.errors.comuna
+                  : ""
+              }
+              classes={{ root: classes.textField }}
+              variant="standard"
+              disabled={formik.values.region ? false : true}
+            >
+              {regionComuna[formik.values.region].comunas.map((com) => (
+                <MenuItem key={com} value={com}>
+                  {com}
+                </MenuItem>
+              ))}
+            </TextField>
           </Grid>
         </Grid>
         <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
@@ -98,7 +97,6 @@ const Step2 = ({ handleNext, handleBack, formik }) => {
             disabled={
               formik.values.address !== "" &&
               formik.values.comuna !== "" &&
-              formik.values.city !== "" &&
               formik.values.region !== ""
                 ? false
                 : true

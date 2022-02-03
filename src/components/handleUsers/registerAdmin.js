@@ -3,13 +3,13 @@ import Button from "@mui/material/Button";
 import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
-import SnackbarAlert from "./snackbarAlert";
+import SnackbarAlert from "../snackbarAlert";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import MenuItem from "@mui/material/MenuItem";
 import { useHistory } from "react-router-dom";
-import { url_backend } from "../global";
-import { useStyles } from "./styles";
+import { url_backend } from "../../utils/global";
+import { useStyles } from "../styles";
 import { Formik } from "formik";
 
 const Register = () => {
@@ -166,7 +166,7 @@ const Register = () => {
             </form>
           )}
         </Formik>
-        <Button onClick={() => history.push("/users")} sx={{ mt: 3, ml: 1 }}>
+        <Button onClick={() => history.goBack()} sx={{ mt: 3, ml: 1 }}>
           Volver
         </Button>
       </Box>
