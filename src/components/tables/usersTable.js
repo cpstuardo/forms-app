@@ -122,7 +122,7 @@ EnhancedTableHead.propTypes = {
   rowCount: PropTypes.number.isRequired,
 };
 
-const EnhancedTableToolbar = ({ namesOptions, rolesOptions, setFilters }) => {
+const EnhancedTableToolbar = ({ rolesOptions, setFilters, setPage }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleClick = (event) => {
@@ -162,9 +162,9 @@ const EnhancedTableToolbar = ({ namesOptions, rolesOptions, setFilters }) => {
         handleClose={handleClose}
         id={id}
         anchorEl={anchorEl}
-        namesOptions={namesOptions}
         rolesOptions={rolesOptions}
         setFilters={setFilters}
+        setPage={setPage}
       />
     </Toolbar>
   );
@@ -175,13 +175,15 @@ export default function EnhancedTable({
   setOpenSnackDelete,
   setOpenSnackFail,
   setFilters,
+  page,
+  setPage,
+  limit,
+  setLimit,
+  total,
 }) {
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("id");
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const history = useHistory();
-  const [names, setNames] = React.useState({});
   const [roles, setRoles] = React.useState({});
 
   const handleRequestSort = (event, property) => {
@@ -221,7 +223,7 @@ export default function EnhancedTable({
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+    setLimit(parseInt(event.target.value, 10));
     setPage(0);
   };
 
@@ -235,25 +237,21 @@ export default function EnhancedTable({
     fetch(url_backend + "auth/options", requestOptions)
       .then((response) => response.json())
       .then((data) => {
-        data.names.map((dict_name) => {
-          names[dict_name["name"]] = false;
-        });
         data.roles.map((dict_role) => {
           roles[dict_role["role"]] = false;
         });
       });
   }, []);
 
-  const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+  const emptyRows = page > 0 ? Math.max(0, limit - rows.length) : 0;
 
   return (
     <Box sx={{ display: "flex", justifyContent: "center", marginBottom: -10 }}>
       <Paper sx={{ width: "70%", mb: 10 }}>
         <EnhancedTableToolbar
           rolesOptions={roles}
-          namesOptions={names}
           setFilters={setFilters}
+          setPage={setPage}
         />
         <TableContainer>
           <Table
@@ -265,12 +263,11 @@ export default function EnhancedTable({
               order={order}
               orderBy={orderBy}
               onRequestSort={handleRequestSort}
-              rowCount={rows.length}
+              rowCount={total}
             />
             <TableBody>
-              {stableSort(rows, getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row, index) => {
+              {stableSort(rows, getComparator(order, orderBy)).map(
+                (row, index) => {
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
@@ -300,7 +297,8 @@ export default function EnhancedTable({
                       </TableCell>
                     </TableRow>
                   );
-                })}
+                }
+              )}
               {emptyRows > 0 && (
                 <TableRow
                   style={{
@@ -316,9 +314,9 @@ export default function EnhancedTable({
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={rows.length}
+          count={total}
           labelRowsPerPage={"Filas por página"}
-          rowsPerPage={rowsPerPage}
+          rowsPerPage={limit}
           page={page}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}

@@ -20,6 +20,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import { useHistory } from "react-router-dom";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { url_backend } from "../../utils/global";
+import FilterForms from "../filters/filterForms";
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -146,7 +147,26 @@ EnhancedTableHead.propTypes = {
   rowCount: PropTypes.number.isRequired,
 };
 
-const EnhancedTableToolbar = () => {
+const EnhancedTableToolbar = ({
+  genderOptions,
+  regionOptions,
+  comunaOptions,
+  setFilters,
+  setPage,
+}) => {
+  const [anchorEl, setAnchorEl] = React.useState(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const id = open ? "simple-popover" : undefined;
+
   return (
     <Toolbar
       sx={{
@@ -164,10 +184,22 @@ const EnhancedTableToolbar = () => {
       </Typography>
 
       <Tooltip title="Filtrar">
-        <IconButton>
+        <IconButton aria-describedby={id} onClick={handleClick}>
           <FilterListIcon />
         </IconButton>
       </Tooltip>
+      <FilterForms
+        open={open}
+        handleClose={handleClose}
+        id={id}
+        anchorEl={anchorEl}
+        genderOptions={genderOptions}
+        regionOptions={regionOptions}
+        comunaOptions={comunaOptions}
+        setFilters={setFilters}
+        setPage={setPage}
+        handleClose={handleClose}
+      />
     </Toolbar>
   );
 };
@@ -176,12 +208,19 @@ export default function EnhancedTable({
   rows,
   setOpenSnackFail,
   setOpenSnackDelete,
+  setFilters,
+  page,
+  setPage,
+  limit,
+  setLimit,
+  total,
 }) {
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("id");
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const history = useHistory();
+  const [genders, setGenders] = React.useState({});
+  const [regions, setRegions] = React.useState({});
+  const [comunas, setComunas] = React.useState({});
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -194,7 +233,7 @@ export default function EnhancedTable({
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+    setLimit(parseInt(event.target.value, 10));
     setPage(0);
   };
 
@@ -220,13 +259,40 @@ export default function EnhancedTable({
     });
   };
 
-  const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+  React.useEffect(() => {
+    const requestOptions = {
+      method: "GET",
+      headers: {
+        Authorization: "Bearer " + sessionStorage.getItem("accessToken"),
+      },
+    };
+    fetch(url_backend + "form/options", requestOptions)
+      .then((response) => response.json())
+      .then((data) => {
+        data.genders.map((dict_gender) => {
+          genders[dict_gender["gender"]] = false;
+        });
+        data.regions.map((dict_region) => {
+          regions[dict_region["region"]] = false;
+        });
+        data.comunas.map((dict_comuna) => {
+          comunas[dict_comuna["comuna"]] = false;
+        });
+      });
+  }, []);
+
+  const emptyRows = page > 0 ? Math.max(0, limit - rows.length) : 0;
 
   return (
     <Box sx={{ display: "flex", justifyContent: "center", marginBottom: -10 }}>
       <Paper sx={{ width: "95%", mb: 10 }}>
-        <EnhancedTableToolbar />
+        <EnhancedTableToolbar
+          genderOptions={genders}
+          regionOptions={regions}
+          comunaOptions={comunas}
+          setFilters={setFilters}
+          setPage={setPage}
+        />
         <TableContainer style={{ maxHeight: 800 }}>
           <Table
             sx={{ minWidth: 750 }}
@@ -238,12 +304,11 @@ export default function EnhancedTable({
               order={order}
               orderBy={orderBy}
               onRequestSort={handleRequestSort}
-              rowCount={rows.length}
+              rowCount={total}
             />
             <TableBody>
-              {stableSort(rows, getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row, index) => {
+              {stableSort(rows, getComparator(order, orderBy)).map(
+                (row, index) => {
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
@@ -278,7 +343,8 @@ export default function EnhancedTable({
                       </TableCell>
                     </TableRow>
                   );
-                })}
+                }
+              )}
               {emptyRows > 0 && (
                 <TableRow
                   style={{
@@ -294,9 +360,9 @@ export default function EnhancedTable({
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={rows.length}
+          count={total}
           labelRowsPerPage={"Filas por página"}
-          rowsPerPage={rowsPerPage}
+          rowsPerPage={limit}
           page={page}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}

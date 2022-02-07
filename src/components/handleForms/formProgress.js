@@ -13,6 +13,10 @@ const FormProgress = (props) => {
   const [usersProgress, setUsersProgress] = useState([]);
   const [openSnackDelete, setOpenSnackDelete] = useState(false);
   const [openSnackFail, setOpenSnackFail] = useState(false);
+  const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [filters, setFilters] = useState("");
 
   useEffect(() => {
     const requestOptions = {
@@ -21,20 +25,30 @@ const FormProgress = (props) => {
         Authorization: "Bearer " + sessionStorage.getItem("accessToken"),
       },
     };
-    fetch(url_backend + "form/all", requestOptions)
+    fetch(
+      url_backend +
+        "form/forms?page=" +
+        (page + 1) +
+        "&limit=" +
+        limit +
+        filters,
+      requestOptions
+    )
       .then((response) => response.json())
-      .then((data) =>
+      .then((data) => {
+        console.log(data);
+        setTotal(data.meta.totalItems);
         setAnswers(
-          data.map((d) => {
+          data.items.map((d) => {
             d.user = d.user.name;
             return d;
           })
-        )
-      );
+        );
+      });
     fetch(url_backend + "form/countByUser", requestOptions)
       .then((response) => response.json())
       .then((data) => setUsersProgress(data));
-  }, [openSnackDelete]);
+  }, [openSnackDelete, filters, limit, page]);
 
   return (
     <div>
@@ -65,6 +79,12 @@ const FormProgress = (props) => {
         rows={answers}
         setOpenSnackDelete={setOpenSnackDelete}
         setOpenSnackFail={setOpenSnackFail}
+        setFilters={setFilters}
+        page={page}
+        setPage={setPage}
+        limit={limit}
+        setLimit={setLimit}
+        total={total}
       />
       <Button
         variant="contained"

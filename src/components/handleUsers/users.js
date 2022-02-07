@@ -7,10 +7,13 @@ import SnackbarAlert from "../snackbarAlert";
 
 const Users = () => {
   const history = useHistory();
-  const [filters, setFilters] = useState("/");
+  const [filters, setFilters] = useState("");
   const [users, setUsers] = useState([]);
   const [openSnackDelete, setOpenSnackDelete] = useState(false);
   const [openSnackFail, setOpenSnackFail] = useState(false);
+  const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     const requestOptions = {
@@ -19,10 +22,21 @@ const Users = () => {
         Authorization: "Bearer " + sessionStorage.getItem("accessToken"),
       },
     };
-    fetch(url_backend + "auth/users" + filters, requestOptions)
+    fetch(
+      url_backend +
+        "auth/users?page=" +
+        (page + 1) +
+        "&limit=" +
+        limit +
+        filters,
+      requestOptions
+    )
       .then((response) => response.json())
-      .then((data) => setUsers(data));
-  }, [openSnackDelete, filters]);
+      .then((data) => {
+        setTotal(data.meta.totalItems);
+        setUsers(data.items);
+      });
+  }, [openSnackDelete, filters, limit, page]);
 
   return (
     <div>
@@ -44,6 +58,11 @@ const Users = () => {
         setOpenSnackDelete={setOpenSnackDelete}
         setOpenSnackFail={setOpenSnackFail}
         setFilters={setFilters}
+        page={page}
+        setPage={setPage}
+        limit={limit}
+        setLimit={setLimit}
+        total={total}
       />
       <Button
         onClick={() => history.push("/registerAdmin")}

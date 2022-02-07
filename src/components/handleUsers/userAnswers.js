@@ -23,7 +23,7 @@ const UserAnswers = () => {
       .then((response) => response.json())
       .then((data) =>
         setAnswers(
-          data.map((d) => {
+          data.items.map((d) => {
             d.user = d.user.name;
             return d;
           })

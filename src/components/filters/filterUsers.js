@@ -8,8 +8,8 @@ import Collapse from "@mui/material/Collapse";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
-import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import "../../App.css";
@@ -19,24 +19,33 @@ const FilterUsers = ({
   open,
   anchorEl,
   handleClose,
-  namesOptions,
   rolesOptions,
   setFilters,
+  setPage,
 }) => {
-  const [openName, setOpenName] = React.useState(false);
-  const [openRole, setOpenRole] = React.useState(false);
-  const [names, setNames] = React.useState(namesOptions);
+  const [openRole, setOpenRole] = React.useState(true);
   const [roles, setRoles] = React.useState(rolesOptions);
 
   const updateFilters = () => {
-    // Recorrer names y recorrer roles
-    console.log("actualizar filtros");
+    const filter = ["&role="];
+    Object.keys(roles).map((role) => {
+      if (roles[role]) {
+        filter.push(role);
+        filter.push(",");
+      }
+    });
+    const strFilter = filter.join("");
+    if (filter.length === 1) {
+      setFilters("");
+    } else {
+      setFilters(strFilter);
+    }
+    setPage(0);
   };
 
-  const handleChangeName = (event) => {
-    setNames({
-      ...names,
-      [event.target.name]: event.target.checked,
+  const removeFilters = () => {
+    Object.keys(roles).map((role) => {
+      roles[role] = false;
     });
     updateFilters();
   };
@@ -46,11 +55,6 @@ const FilterUsers = ({
       ...roles,
       [event.target.name]: event.target.checked,
     });
-    updateFilters();
-  };
-
-  const handleClickName = () => {
-    setOpenName(!openName);
   };
 
   const handleClickRole = () => {
@@ -86,38 +90,6 @@ const FilterUsers = ({
           component="nav"
           aria-labelledby="nested-list-subheader"
         >
-          <ListItemButton onClick={handleClickName}>
-            <ListItemText primary="Nombre" />
-            {openName ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-          <Collapse in={openName} timeout="auto" unmountOnExit>
-            <Box sx={{ display: "flex", marginTop: -3, marginBottom: -4 }}>
-              <FormControl
-                sx={{ m: 3 }}
-                component="fieldset"
-                variant="standard"
-              >
-                <FormGroup>
-                  {Object.keys(names).map((name) => {
-                    return (
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={names[name]}
-                            onChange={handleChangeName}
-                            name={name}
-                          />
-                        }
-                        label={name}
-                        key={name}
-                      />
-                    );
-                  })}
-                </FormGroup>
-              </FormControl>
-            </Box>
-          </Collapse>
-
           <ListItemButton onClick={handleClickRole}>
             <ListItemText primary="Rol" />
             {openRole ? <ExpandLess /> : <ExpandMore />}
@@ -148,6 +120,25 @@ const FilterUsers = ({
             </Box>
           </Collapse>
         </List>
+        <Button
+          variant="contained"
+          onClick={() => {
+            updateFilters();
+            handleClose();
+          }}
+          sx={{ mt: 3, ml: 1 }}
+        >
+          Aplicar
+        </Button>
+        <Button
+          onClick={() => {
+            removeFilters();
+            handleClose();
+          }}
+          sx={{ mt: 1, ml: 1 }}
+        >
+          Eliminar filtros
+        </Button>
       </div>
     </Popover>
   );

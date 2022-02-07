@@ -17,4 +17,7 @@
   height: auto;
   width: 60vh;
   margin: 0.5cm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
 }
